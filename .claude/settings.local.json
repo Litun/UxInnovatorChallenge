@@ -1,0 +1,45 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /Users/litun/AndroidStudioProjects/UxInnovator -type d -not -path */.* -not -path */build -not -path */.gradle -not -path */.idea -not -path */.kotlin -not -path */.git)",
+      "WebFetch(domain:arkivanov.github.io)",
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:proandroiddev.com)",
+      "WebFetch(domain:jasondl.ee)",
+      "Bash(jq:*)",
+      "Bash(bash /Users/litun/AndroidStudioProjects/UxInnovator/.claude/hooks/pre-stop-checks.sh)",
+      "Bash(echo \"Exit: $?\")"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/litun/AndroidStudioProjects/UxInnovator/.claude/hooks/compile-kotlin.sh",
+            "timeout": 120,
+            "statusMessage": "Compiling Kotlin...",
+            "asyncRewake": true
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/litun/AndroidStudioProjects/UxInnovator/.claude/hooks/pre-stop-checks.sh",
+            "timeout": 300,
+            "statusMessage": "Running tests and compiling iOS..."
+          }
+        ]
+      }
+    ]
+  }
+}
