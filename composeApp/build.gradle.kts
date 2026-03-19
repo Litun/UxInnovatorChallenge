@@ -1,5 +1,6 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -62,8 +63,14 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
+}
+
+val localProperties = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) load(f.inputStream())
 }
 
 android {
@@ -90,6 +97,15 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+    testOptions {
+        unitTests.all { test ->
+            val token = localProperties.getProperty("GO_REST_TOKEN_FOR_INTEGRATION_TESTS")
+                ?: System.getenv("GO_REST_TOKEN_FOR_INTEGRATION_TESTS")
+            if (token != null) {
+                test.systemProperty("GO_REST_TOKEN_FOR_INTEGRATION_TESTS", token)
+            }
+        }
     }
 }
 
