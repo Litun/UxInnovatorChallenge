@@ -5,7 +5,7 @@ Kotlin Multiplatform app (Android + iOS) using Compose Multiplatform. Implements
 
 ## Architecture
 - **Primary pattern**: Decompose (https://github.com/arkivanov/Decompose) for navigation and component lifecycle
-- **Reference app**: Confetti (https://github.com/joreilly/Confetti) — follow its patterns for KMP structure, DI, and component organization
+- **Reference app**: Confetti (https://github.com/joreilly/Confetti) — follow its patterns for KMP structure, DI, and component organization. If you have a local checkout, add its path to `CLAUDE.local.md` (gitignored) so Claude can browse it directly.
 - **Layers**: `domain` (models, interfaces, use cases) → `data` (API, DB implementations) → `ui` (Components, screens)
 - All business logic in `commonMain`; platform code only via `expect/actual` or injected interfaces
 
@@ -67,6 +67,16 @@ fun onBack() = navigation.pop()
 - **SQLDelight** or **Room KMP**: local caching
 - **Koin**: DI (use `koin-core` in commonMain + `koin-android` in androidMain)
 - Use KMP-compatible versions of all libraries
+
+## Dependency Docs
+Fetch these when working with the relevant library:
+
+| Library | Docs |
+|---------|------|
+| Koin | https://insert-koin.io/llms.txt |
+| Ktor | https://raw.githubusercontent.com/ktorio/ktor/main/README.md |
+| SQLDelight | https://raw.githubusercontent.com/sqldelight/sqldelight/master/README.md |
+| Decompose | https://raw.githubusercontent.com/arkivanov/Decompose/master/README.md |
 
 ## Testing
 - Unit tests for all Components and UseCases in `commonTest`
