@@ -1,0 +1,104 @@
+package litun.uxinnovator.ui.feed
+
+import com.arkivanov.decompose.DefaultComponentContext
+import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import com.arkivanov.essenty.lifecycle.resume
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.runTest
+import litun.uxinnovator.domain.model.Gender
+import litun.uxinnovator.domain.model.User
+import litun.uxinnovator.domain.model.UserStatus
+import litun.uxinnovator.domain.usecase.GetUsersUseCase
+import litun.uxinnovator.domain.repository.UserRepository
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+private val sampleUsers = listOf(
+    User(id = 1L, name = "Alice", email = "alice@example.com", gender = Gender.FEMALE, status = UserStatus.ACTIVE),
+    User(id = 2L, name = "Bob", email = "bob@example.com", gender = Gender.MALE, status = UserStatus.ACTIVE),
+)
+
+private class FakeUserRepository(
+    private val result: Result<List<User>>,
+) : UserRepository {
+    override suspend fun getLastPageUsers(): List<User> = result.getOrThrow()
+    override suspend fun createUser(name: String, email: String, gender: Gender, status: UserStatus): User = error("not used")
+    override suspend fun deleteUser(id: Long) = error("not used")
+}
+
+private fun makeContext(): DefaultComponentContext {
+    val lifecycle = LifecycleRegistry()
+    lifecycle.resume()
+    return DefaultComponentContext(lifecycle = lifecycle)
+}
+
+class UserFeedComponentTest {
+
+    @Test
+    fun loadingStateSetOnInit() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val useCase = GetUsersUseCase(FakeUserRepository(Result.success(sampleUsers)))
+        val component = UserFeedComponent(makeContext(), useCase, dispatcher)
+
+        assertTrue(component.state.value.isLoading)
+        assertNull(component.state.value.error)
+        assertTrue(component.state.value.users.isEmpty())
+    }
+
+    @Test
+    fun successStateAfterLoad() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val useCase = GetUsersUseCase(FakeUserRepository(Result.success(sampleUsers)))
+        val component = UserFeedComponent(makeContext(), useCase, dispatcher)
+
+        testScheduler.advanceUntilIdle()
+
+        assertFalse(component.state.value.isLoading)
+        assertNull(component.state.value.error)
+        assertEquals(sampleUsers, component.state.value.users)
+    }
+
+    @Test
+    fun errorStateOnFailure() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val useCase = GetUsersUseCase(FakeUserRepository(Result.failure(RuntimeException("Network error"))))
+        val component = UserFeedComponent(makeContext(), useCase, dispatcher)
+
+        testScheduler.advanceUntilIdle()
+
+        assertFalse(component.state.value.isLoading)
+        assertNotNull(component.state.value.error)
+        assertEquals("Network error", component.state.value.error)
+        assertTrue(component.state.value.users.isEmpty())
+    }
+
+    @Test
+    fun refreshClearsErrorAndReloads() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        var callCount = 0
+        val repo = object : UserRepository {
+            override suspend fun getLastPageUsers(): List<User> {
+                callCount++
+                return if (callCount == 1) throw RuntimeException("First failure") else sampleUsers
+            }
+            override suspend fun createUser(name: String, email: String, gender: Gender, status: UserStatus): User = error("not used")
+            override suspend fun deleteUser(id: Long) = error("not used")
+        }
+        val useCase = GetUsersUseCase(repo)
+        val component = UserFeedComponent(makeContext(), useCase, dispatcher)
+
+        testScheduler.advanceUntilIdle()
+        assertNotNull(component.state.value.error)
+
+        component.refresh()
+        testScheduler.advanceUntilIdle()
+
+        assertFalse(component.state.value.isLoading)
+        assertNull(component.state.value.error)
+        assertEquals(sampleUsers, component.state.value.users)
+    }
+}

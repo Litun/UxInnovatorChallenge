@@ -47,6 +47,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.decompose)
             implementation(libs.decompose.extensionsCompose)
+            implementation(libs.essenty.lifecycleCoroutines)
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.contentNegotiation)
             implementation(libs.ktor.serialization.kotlinxJson)
@@ -77,12 +78,21 @@ android {
     namespace = "litun.uxinnovator"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "litun.uxinnovator"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+        buildConfigField(
+            "String",
+            "GO_REST_TOKEN",
+            "\"${localProperties.getProperty("GO_REST_TOKEN") ?: ""}\"",
+        )
     }
     packaging {
         resources {

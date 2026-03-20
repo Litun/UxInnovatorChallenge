@@ -4,7 +4,8 @@ import ComposeApp
 
 struct ComposeView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
-        MainViewControllerKt.MainViewController()
+        let token = Bundle.main.object(forInfoDictionaryKey: "GO_REST_TOKEN") as? String ?? ""
+        return MainViewControllerKt.MainViewController(goRestToken: token)
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
@@ -16,6 +17,3 @@ struct ContentView: View {
             .ignoresSafeArea()
     }
 }
-
-
-

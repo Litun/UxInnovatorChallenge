@@ -13,9 +13,9 @@ class UserRepositoryImpl(
 ) : UserRepository {
 
     override suspend fun getLastPageUsers(): List<User> {
-        val firstPage = apiService.getUsers(page = 1)
+        val firstPage = apiService.getUsers(page = 1, perPage = 100)
         val lastPage = if (firstPage.totalPages > 1) {
-            apiService.getUsers(page = firstPage.totalPages)
+            apiService.getUsers(page = firstPage.totalPages, perPage = 100)
         } else {
             firstPage
         }
