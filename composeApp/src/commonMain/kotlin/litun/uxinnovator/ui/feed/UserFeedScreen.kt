@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import litun.uxinnovator.components.UserFeedComponent
 import litun.uxinnovator.components.UserFeedState
+import litun.uxinnovator.components.UserFeedComponent.ModalChild
 import litun.uxinnovator.domain.model.User
 import litun.uxinnovator.domain.model.UserStatus
 import myapplication.composeapp.generated.resources.Res
@@ -77,12 +78,19 @@ fun UserFeedScreen(
     onToggleTheme: () -> Unit = {},
 ) {
     val state by component.state.subscribeAsState()
+    val modalSlot by component.modalSlot.subscribeAsState()
+
     UserFeedContent(
         state = state,
         onRetry = component::refresh,
         darkTheme = darkTheme,
-        onToggleTheme = onToggleTheme
+        onToggleTheme = onToggleTheme,
+        onAddUser = component::openAddUser,
     )
+
+    (modalSlot.child?.instance as? ModalChild.AddUser)?.let {
+        AddUserSheet(component = it.component)
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,6 +100,7 @@ internal fun UserFeedContent(
     onRetry: () -> Unit,
     darkTheme: Boolean = true,
     onToggleTheme: () -> Unit = {},
+    onAddUser: () -> Unit = {},
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
@@ -122,7 +131,7 @@ internal fun UserFeedContent(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = {},
+                onClick = onAddUser,
                 shape = RoundedCornerShape(16.dp),
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer,

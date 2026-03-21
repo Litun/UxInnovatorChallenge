@@ -5,3 +5,7 @@ PRODUCT_BUNDLE_IDENTIFIER=litun.uxinnovator.MyApplication$(TEAM_ID)
 
 CURRENT_PROJECT_VERSION=1
 MARKETING_VERSION=1.0
+
+// Local secrets - override in Config.local.xcconfig (gitignored)
+GO_REST_TOKEN=
+#include? "Config.local.xcconfig"
