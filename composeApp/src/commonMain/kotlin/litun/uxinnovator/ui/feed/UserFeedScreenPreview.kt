@@ -2,6 +2,7 @@ package litun.uxinnovator.ui.feed
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import litun.uxinnovator.components.UserFeedState
 import litun.uxinnovator.domain.model.Gender
 import litun.uxinnovator.domain.model.User
 import litun.uxinnovator.domain.model.UserStatus

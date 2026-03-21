@@ -1,4 +1,4 @@
-package litun.uxinnovator.ui.root
+package litun.uxinnovator.components
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
@@ -6,12 +6,11 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.value.Value
 import kotlinx.serialization.Serializable
-import litun.uxinnovator.domain.usecase.GetUsersUseCase
-import litun.uxinnovator.ui.feed.UserFeedComponent
+import litun.uxinnovator.domain.repository.UserRepository
 
 class RootComponent(
     componentContext: ComponentContext,
-    private val getUsersUseCase: GetUsersUseCase,
+    private val repository: UserRepository,
 ) : ComponentContext by componentContext {
 
     @Serializable
@@ -33,7 +32,7 @@ class RootComponent(
         handleBackButton = true,
         childFactory = { config, ctx ->
             when (config) {
-                is Config.UserFeed -> Child.UserFeed(UserFeedComponent(ctx, getUsersUseCase))
+                is Config.UserFeed -> Child.UserFeed(UserFeedComponent(ctx, repository))
             }
         },
     )

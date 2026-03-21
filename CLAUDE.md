@@ -6,7 +6,7 @@ Kotlin Multiplatform app (Android + iOS) using Compose Multiplatform. Implements
 ## Architecture
 - **Primary pattern**: Decompose (https://github.com/arkivanov/Decompose) for navigation and component lifecycle
 - **Reference app**: Confetti (https://github.com/joreilly/Confetti) — follow its patterns for KMP structure, DI, and component organization. If you have a local checkout, add its path to `CLAUDE.local.md` (gitignored) so Claude can browse it directly.
-- **Layers**: `domain` (models, interfaces, use cases) → `data` (API, DB implementations) → `ui` (Components, screens)
+- **Layers**: `domain` (models, repository interfaces) → `data` (API, DB implementations) → `components` (Decompose components) → `ui` (screens, Compose)
 - All business logic in `commonMain`; platform code only via `expect/actual` or injected interfaces
 
 ## Decompose Patterns
@@ -22,7 +22,7 @@ Kotlin Multiplatform app (Android + iOS) using Compose Multiplatform. Implements
 ```kotlin
 class UserListComponent(
     componentContext: ComponentContext,
-    private val getUsersUseCase: GetUsersUseCase,
+    private val repository: UserRepository,
     private val onUserSelected: (User) -> Unit,
 ) : ComponentContext by componentContext {
 
@@ -57,7 +57,6 @@ fun onBack() = navigation.pop()
 ## Naming Conventions
 - Components: `UserListComponent`, `AddUserComponent`, `RootComponent`
 - Repositories: `UserRepository` (interface in domain), `UserRepositoryImpl` (in data)
-- Use Cases: `GetUsersUseCase`, `DeleteUserUseCase`, `AddUserUseCase`
 - State/Config: `UserListState`, `RootConfig`, `UserListConfig`
 
 ## Dependencies

@@ -42,15 +42,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.jetbrains.compose.resources.painterResource
+import com.arkivanov.decompose.extensions.compose.subscribeAsState
+import litun.uxinnovator.components.UserFeedComponent
+import litun.uxinnovator.components.UserFeedState
+import litun.uxinnovator.domain.model.User
+import litun.uxinnovator.domain.model.UserStatus
 import myapplication.composeapp.generated.resources.Res
 import myapplication.composeapp.generated.resources.ic_dark_mode
 import myapplication.composeapp.generated.resources.ic_light_mode
+import org.jetbrains.compose.resources.painterResource
 import kotlin.math.PI
 import kotlin.math.sin
-import com.arkivanov.decompose.extensions.compose.subscribeAsState
-import litun.uxinnovator.domain.model.User
-import litun.uxinnovator.domain.model.UserStatus
 
 // Dark mode: dark-tinted bg, medium-green text
 private val GreenActiveBgDark = Color(0xFF1B5E20).copy(alpha = 0.4f)
@@ -75,7 +77,12 @@ fun UserFeedScreen(
     onToggleTheme: () -> Unit = {},
 ) {
     val state by component.state.subscribeAsState()
-    UserFeedContent(state = state, onRetry = component::refresh, darkTheme = darkTheme, onToggleTheme = onToggleTheme)
+    UserFeedContent(
+        state = state,
+        onRetry = component::refresh,
+        darkTheme = darkTheme,
+        onToggleTheme = onToggleTheme
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -140,6 +147,7 @@ internal fun UserFeedContent(
                     message = state.error,
                     onRetry = onRetry,
                 )
+
                 else -> UserList(users = state.users, darkTheme = darkTheme)
             }
         }
@@ -223,6 +231,7 @@ private fun StatusBadge(status: UserStatus, darkTheme: Boolean) {
         } else {
             Triple(GreenActiveBgLight, GreenActiveTextLight, GreenActiveBorderLight)
         }
+
         UserStatus.INACTIVE -> Triple(
             MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
             MaterialTheme.colorScheme.onSurfaceVariant,

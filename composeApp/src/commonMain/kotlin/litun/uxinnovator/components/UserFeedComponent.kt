@@ -1,4 +1,4 @@
-package litun.uxinnovator.ui.feed
+package litun.uxinnovator.components
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.value.MutableValue
@@ -10,7 +10,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import litun.uxinnovator.domain.model.User
-import litun.uxinnovator.domain.usecase.GetUsersUseCase
+import litun.uxinnovator.domain.repository.UserRepository
 
 data class UserFeedState(
     val users: List<User> = emptyList(),
@@ -20,7 +20,7 @@ data class UserFeedState(
 
 class UserFeedComponent(
     componentContext: ComponentContext,
-    private val getUsersUseCase: GetUsersUseCase,
+    private val repository: UserRepository,
     mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) : ComponentContext by componentContext {
 
@@ -43,7 +43,7 @@ class UserFeedComponent(
         loadJob = scope.launch {
             _state.value = UserFeedState(isLoading = true)
             try {
-                val users = getUsersUseCase()
+                val users = repository.getLastPageUsers()
                 _state.value = UserFeedState(users = users)
             } catch (e: Exception) {
                 _state.value = UserFeedState(error = e.message ?: "Unknown error")

@@ -4,8 +4,9 @@ import androidx.compose.ui.window.ComposeUIViewController
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.resume
+import litun.uxinnovator.components.RootComponent
 import litun.uxinnovator.di.initKoin
-import litun.uxinnovator.ui.root.RootComponent
+import litun.uxinnovator.domain.repository.UserRepository
 import org.koin.core.KoinApplication
 import platform.UIKit.UIViewController
 
@@ -18,7 +19,7 @@ fun MainViewController(goRestToken: String): UIViewController {
     val lifecycle = LifecycleRegistry()
     val root = RootComponent(
         componentContext = DefaultComponentContext(lifecycle = lifecycle),
-        getUsersUseCase = koinApp!!.koin.get(),
+        repository = koinApp!!.koin.get<UserRepository>(),
     )
     lifecycle.resume()
     return ComposeUIViewController { App(root) }

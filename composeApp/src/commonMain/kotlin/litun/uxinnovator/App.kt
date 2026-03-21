@@ -6,8 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.extensions.compose.stack.Children
+import litun.uxinnovator.components.RootComponent
 import litun.uxinnovator.ui.feed.UserFeedScreen
-import litun.uxinnovator.ui.root.RootComponent
 import litun.uxinnovator.ui.theme.AppTheme
 
 @Composable

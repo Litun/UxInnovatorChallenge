@@ -5,8 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.arkivanov.decompose.defaultComponentContext
-import litun.uxinnovator.domain.usecase.GetUsersUseCase
-import litun.uxinnovator.ui.root.RootComponent
+import litun.uxinnovator.components.RootComponent
+import litun.uxinnovator.domain.repository.UserRepository
 import org.koin.core.context.GlobalContext
 
 class MainActivity : ComponentActivity() {
@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
 
         val root = RootComponent(
             componentContext = defaultComponentContext(),
-            getUsersUseCase = GlobalContext.get().get<GetUsersUseCase>(),
+            repository = GlobalContext.get().get<UserRepository>(),
         )
 
         setContent {
