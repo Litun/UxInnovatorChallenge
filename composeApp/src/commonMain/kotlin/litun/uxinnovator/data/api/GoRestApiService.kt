@@ -3,7 +3,6 @@ package litun.uxinnovator.data.api
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
@@ -27,7 +26,7 @@ import litun.uxinnovator.domain.model.ValidationFieldError
 class GoRestApiService(
     private val token: String,
     private val baseUrl: String = "https://gorest.co.in/public/v2",
-) {
+) : UserApiService {
     private val json = Json { ignoreUnknownKeys = true }
 
     private val client = HttpClient {
@@ -37,7 +36,7 @@ class GoRestApiService(
         expectSuccess = false
     }
 
-    suspend fun getUsers(page: Int, perPage: Int = 10): UsersPage {
+    override suspend fun getUsers(page: Int, perPage: Int): UsersPage {
         val response = client.get("$baseUrl/users") {
             parameter("page", page)
             parameter("per_page", perPage)
@@ -51,7 +50,7 @@ class GoRestApiService(
         )
     }
 
-    suspend fun createUser(request: CreateUserRequest): UserDto {
+    override suspend fun createUser(request: CreateUserRequest): UserDto {
         val response = client.post("$baseUrl/users") {
             bearerAuth(token)
             contentType(ContentType.Application.Json)
@@ -61,7 +60,7 @@ class GoRestApiService(
         return response.body()
     }
 
-    suspend fun deleteUser(id: Long) {
+    override suspend fun deleteUser(id: Long) {
         val response = client.delete("$baseUrl/users/$id") {
             bearerAuth(token)
         }
@@ -80,6 +79,7 @@ class GoRestApiService(
                 json.decodeFromString<List<ApiErrorItem>>(body)
                     .map { ValidationFieldError(it.field, it.message) }
             )
+
             else -> GoRestException.UnknownError(status.value, body)
         }
     }

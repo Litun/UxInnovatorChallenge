@@ -11,7 +11,6 @@ import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.lifecycle.coroutines.coroutineScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -57,16 +56,19 @@ class UserFeedComponent(
                 AddUserComponent(
                     componentContext = ctx,
                     repository = repository,
-                    onUserCreated = ::onUserCreated,
+                    onUserCreated = { slotNavigation.dismiss() },
                     onDismiss = { slotNavigation.dismiss() },
                 )
             )
         },
     )
 
-    private var loadJob: Job? = null
-
     init {
+        scope.launch {
+            repository.observeUsers().collect { users ->
+                _state.value = _state.value.copy(users = users)
+            }
+        }
         loadUsers()
     }
 
@@ -74,20 +76,25 @@ class UserFeedComponent(
 
     fun openAddUser() = slotNavigation.activate(ModalConfig.AddUser)
 
-    private fun onUserCreated(user: User) {
-        _state.value = _state.value.copy(users = listOf(user) + _state.value.users)
-        slotNavigation.dismiss()
+    fun onDeleteUser(id: Long) {
+        scope.launch {
+            try {
+                repository.deleteUser(id)
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(error = e.message ?: "Unknown error")
+            }
+        }
     }
 
     private fun loadUsers() {
-        loadJob?.cancel()
-        loadJob = scope.launch {
-            _state.value = UserFeedState(isLoading = true)
+        scope.launch {
+            _state.value = _state.value.copy(isLoading = true, error = null)
             try {
-                val users = repository.getLastPageUsers()
-                _state.value = UserFeedState(users = users)
+                repository.refreshUsers()
             } catch (e: Exception) {
-                _state.value = UserFeedState(error = e.message ?: "Unknown error")
+                _state.value = _state.value.copy(error = e.message ?: "Unknown error")
+            } finally {
+                _state.value = _state.value.copy(isLoading = false)
             }
         }
     }

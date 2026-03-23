@@ -10,7 +10,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import litun.uxinnovator.domain.model.Gender
 import litun.uxinnovator.domain.model.GoRestException
-import litun.uxinnovator.domain.model.User
 import litun.uxinnovator.domain.model.UserStatus
 import litun.uxinnovator.domain.repository.UserRepository
 
@@ -28,7 +27,7 @@ data class AddUserState(
 class AddUserComponent(
     componentContext: ComponentContext,
     private val repository: UserRepository,
-    private val onUserCreated: (User) -> Unit,
+    private val onUserCreated: () -> Unit,
     val onDismiss: () -> Unit,
     mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) : ComponentContext by componentContext {
@@ -65,13 +64,13 @@ class AddUserComponent(
         scope.launch {
             _state.value = _state.value.copy(isSubmitting = true, submitError = null)
             try {
-                val user = repository.createUser(
+                repository.createUser(
                     name = current.name.trim(),
                     email = current.email.trim(),
                     gender = current.gender,
                     status = current.status,
                 )
-                onUserCreated(user)
+                onUserCreated()
             } catch (e: GoRestException.ValidationError) {
                 val byField = e.errors.groupBy { it.field }
                 _state.value = _state.value.copy(

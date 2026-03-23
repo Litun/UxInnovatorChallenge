@@ -3,6 +3,8 @@ package litun.uxinnovator.ui.feed
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.resume
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import litun.uxinnovator.components.UserFeedComponent
@@ -37,7 +39,14 @@ private val sampleUsers = listOf(
 private class FakeUserRepository(
     private val result: Result<List<User>>,
 ) : UserRepository {
-    override suspend fun getLastPageUsers(): List<User> = result.getOrThrow()
+    private val usersFlow = MutableStateFlow<List<User>>(emptyList())
+
+    override fun observeUsers(): Flow<List<User>> = usersFlow
+
+    override suspend fun refreshUsers() {
+        usersFlow.value = result.getOrThrow()
+    }
+
     override suspend fun createUser(
         name: String,
         email: String,
@@ -107,10 +116,14 @@ class UserFeedComponentTest {
     fun refreshClearsErrorAndReloads() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         var callCount = 0
+        val usersFlow = MutableStateFlow<List<User>>(emptyList())
         val repo = object : UserRepository {
-            override suspend fun getLastPageUsers(): List<User> {
+            override fun observeUsers(): Flow<List<User>> = usersFlow
+
+            override suspend fun refreshUsers() {
                 callCount++
-                return if (callCount == 1) throw RuntimeException("First failure") else sampleUsers
+                if (callCount == 1) throw RuntimeException("First failure")
+                usersFlow.value = sampleUsers
             }
 
             override suspend fun createUser(

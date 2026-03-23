@@ -44,8 +44,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import litun.uxinnovator.components.UserFeedComponent
-import litun.uxinnovator.components.UserFeedState
 import litun.uxinnovator.components.UserFeedComponent.ModalChild
+import litun.uxinnovator.components.UserFeedState
 import litun.uxinnovator.domain.model.User
 import litun.uxinnovator.domain.model.UserStatus
 import myapplication.composeapp.generated.resources.Res
@@ -86,6 +86,7 @@ fun UserFeedScreen(
         darkTheme = darkTheme,
         onToggleTheme = onToggleTheme,
         onAddUser = component::openAddUser,
+        onDeleteUser = component::onDeleteUser,
     )
 
     (modalSlot.child?.instance as? ModalChild.AddUser)?.let {
@@ -101,6 +102,7 @@ internal fun UserFeedContent(
     darkTheme: Boolean = true,
     onToggleTheme: () -> Unit = {},
     onAddUser: () -> Unit = {},
+    onDeleteUser: (Long) -> Unit = {},
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
@@ -151,33 +153,42 @@ internal fun UserFeedContent(
                 .padding(paddingValues),
         ) {
             when {
-                state.isLoading -> ShimmerList()
-                state.error != null -> ErrorState(
+                state.isLoading && state.users.isEmpty() -> ShimmerList()
+                state.error != null && state.users.isEmpty() -> ErrorState(
                     message = state.error,
                     onRetry = onRetry,
                 )
 
-                else -> UserList(users = state.users, darkTheme = darkTheme)
+                state.users.isEmpty() -> EmptyState()
+                else -> UserList(
+                    users = state.users,
+                    darkTheme = darkTheme,
+                    onDeleteUser = onDeleteUser
+                )
             }
         }
     }
 }
 
 @Composable
-private fun UserList(users: List<User>, darkTheme: Boolean) {
+private fun UserList(users: List<User>, darkTheme: Boolean, onDeleteUser: (Long) -> Unit) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp),
     ) {
         itemsIndexed(users, key = { _, user -> user.id }) { index, user ->
-            UserCard(user = user, index = index, darkTheme = darkTheme)
+            UserCard(
+                user = user,
+                index = index,
+                darkTheme = darkTheme,
+                onDelete = { onDeleteUser(user.id) })
         }
     }
 }
 
 @Composable
-private fun UserCard(user: User, index: Int, darkTheme: Boolean) {
+private fun UserCard(user: User, index: Int, darkTheme: Boolean, onDelete: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -206,6 +217,14 @@ private fun UserCard(user: User, index: Int, darkTheme: Boolean) {
         }
         Spacer(modifier = Modifier.width(12.dp))
         StatusBadge(status = user.status, darkTheme = darkTheme)
+        Spacer(modifier = Modifier.width(8.dp))
+        IconButton(onClick = onDelete) {
+            Text(
+                text = "×",
+                fontSize = 20.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -328,6 +347,30 @@ private fun ShimmerCard(index: Int, shimmerAlpha: Float) {
                 .height(20.dp)
                 .clip(CircleShape)
                 .background(shimmerColor),
+        )
+    }
+}
+
+@Composable
+private fun EmptyState() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = "No Users",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Add a user with the + button below",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }

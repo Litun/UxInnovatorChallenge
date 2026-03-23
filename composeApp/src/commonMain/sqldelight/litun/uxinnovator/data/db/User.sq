@@ -1,0 +1,17 @@
+CREATE TABLE CachedUser (
+    id     INTEGER NOT NULL PRIMARY KEY,
+    name   TEXT NOT NULL,
+    email  TEXT NOT NULL,
+    gender TEXT NOT NULL,
+    status TEXT NOT NULL
+);
+
+selectAll:
+SELECT * FROM CachedUser ORDER BY id DESC;
+
+upsert:
+INSERT OR REPLACE INTO CachedUser(id, name, email, gender, status)
+VALUES (?, ?, ?, ?, ?);
+
+deleteById:
+DELETE FROM CachedUser WHERE id = ?;
