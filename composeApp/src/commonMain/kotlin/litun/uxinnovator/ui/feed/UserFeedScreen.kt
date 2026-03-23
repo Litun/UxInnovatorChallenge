@@ -7,6 +7,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -30,11 +32,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -86,11 +95,28 @@ fun UserFeedScreen(
         darkTheme = darkTheme,
         onToggleTheme = onToggleTheme,
         onAddUser = component::openAddUser,
-        onDeleteUser = component::onDeleteUser,
+        onLongPressUser = component::onLongPressUser,
+        onUndoDelete = component::onUndoDelete,
+        onFinalizeDelete = component::onFinalizeDelete,
     )
 
     (modalSlot.child?.instance as? ModalChild.AddUser)?.let {
         AddUserSheet(component = it.component)
+    }
+
+    (modalSlot.child?.instance as? ModalChild.DeleteConfirmation)?.let { dialog ->
+        AlertDialog(
+            onDismissRequest = dialog.onDismiss,
+            title = { Text("Delete ${dialog.userName}?") },
+            confirmButton = {
+                TextButton(onClick = dialog.onConfirm) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = dialog.onDismiss) { Text("Cancel") }
+            },
+        )
     }
 }
 
@@ -102,10 +128,28 @@ internal fun UserFeedContent(
     darkTheme: Boolean = true,
     onToggleTheme: () -> Unit = {},
     onAddUser: () -> Unit = {},
-    onDeleteUser: (Long) -> Unit = {},
+    onLongPressUser: (User) -> Unit = {},
+    onUndoDelete: () -> Unit = {},
+    onFinalizeDelete: (Long) -> Unit = {},
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.snackbarUser) {
+        val user = state.snackbarUser ?: return@LaunchedEffect
+        val result = snackbarHostState.showSnackbar(
+            message = "${user.name} deleted",
+            actionLabel = "Undo",
+            duration = SnackbarDuration.Short,
+        )
+        when (result) {
+            SnackbarResult.ActionPerformed -> onUndoDelete()
+            SnackbarResult.Dismissed -> onFinalizeDelete(user.id)
+        }
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -162,8 +206,9 @@ internal fun UserFeedContent(
                 state.users.isEmpty() -> EmptyState()
                 else -> UserList(
                     users = state.users,
+                    pendingDeletes = state.pendingDeletes,
                     darkTheme = darkTheme,
-                    onDeleteUser = onDeleteUser
+                    onLongPressUser = onLongPressUser,
                 )
             }
         }
@@ -171,29 +216,47 @@ internal fun UserFeedContent(
 }
 
 @Composable
-private fun UserList(users: List<User>, darkTheme: Boolean, onDeleteUser: (Long) -> Unit) {
+private fun UserList(
+    users: List<User>,
+    pendingDeletes: Set<Long>,
+    darkTheme: Boolean,
+    onLongPressUser: (User) -> Unit,
+) {
+    val visibleUsers = remember(users, pendingDeletes) { users.filter { it.id !in pendingDeletes } }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp),
     ) {
-        itemsIndexed(users, key = { _, user -> user.id }) { index, user ->
+        itemsIndexed(visibleUsers, key = { _, user -> user.id }) { index, user ->
             UserCard(
+                modifier = Modifier.animateItem(),
                 user = user,
                 index = index,
                 darkTheme = darkTheme,
-                onDelete = { onDeleteUser(user.id) })
+                onLongPress = { onLongPressUser(user) },
+            )
         }
     }
 }
 
 @Composable
-private fun UserCard(user: User, index: Int, darkTheme: Boolean, onDelete: () -> Unit) {
+private fun UserCard(
+    modifier: Modifier = Modifier,
+    user: User,
+    index: Int,
+    darkTheme: Boolean,
+    onLongPress: () -> Unit,
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(cardBackground(index))
+            .combinedClickable(
+                onClick = {},
+                onLongClick = onLongPress,
+            )
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -217,14 +280,6 @@ private fun UserCard(user: User, index: Int, darkTheme: Boolean, onDelete: () ->
         }
         Spacer(modifier = Modifier.width(12.dp))
         StatusBadge(status = user.status, darkTheme = darkTheme)
-        Spacer(modifier = Modifier.width(8.dp))
-        IconButton(onClick = onDelete) {
-            Text(
-                text = "×",
-                fontSize = 20.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
     }
 }
 

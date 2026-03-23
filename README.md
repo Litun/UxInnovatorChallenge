@@ -35,8 +35,8 @@ Execution
 - [x] User feed loading and error states
 - [x] Add user flow with validation
 - [x] Offline experience
-- [ ] Delete flow
-- [ ] Undo deletion and restore
+- [x] Delete flow
+- [x] Undo deletion and restore
 - [ ] Landscape version
 - [ ] High test coverage
 - [x] Dark mode
